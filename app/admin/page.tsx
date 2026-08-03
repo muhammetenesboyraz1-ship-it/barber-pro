@@ -72,6 +72,13 @@ const cancelledBookings = bookings.filter(
   value={search}
   onChange={(e) => setSearch(e.target.value)}
   className="w-full mb-6 p-4 rounded-xl bg-zinc-900 border border-yellow-500/20 text-white outline-none"
+
+/>
+<input
+  type="date"
+  value={selectedDate}
+  onChange={(e) => setSelectedDate(e.target.value)}
+  className="w-full mb-6 p-4 rounded-xl bg-zinc-900 border border-yellow-500/20 text-white outline-none"
 />
 
         <button
@@ -110,15 +117,21 @@ const cancelledBookings = bookings.filter(
   </div>
 </div>
         {bookings
-  .filter(
-    (booking) =>
-      booking.full_name
-        ?.toLowerCase()
-        .includes(search.toLowerCase()) ||
-      booking.phone
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-  )
+ .filter((booking) => {
+  const matchesSearch =
+    booking.full_name
+      ?.toLowerCase()
+      .includes(search.toLowerCase()) ||
+    booking.phone
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+
+  const matchesDate =
+    selectedDate === "" ||
+    booking.appointment_date === selectedDate;
+
+  return matchesSearch && matchesDate;
+})
   .map((booking) => (
           <div
             key={booking.id}
