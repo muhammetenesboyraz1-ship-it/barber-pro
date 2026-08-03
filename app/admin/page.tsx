@@ -66,6 +66,17 @@ const cancelledBookings = bookings.filter(
         </h1>
 
 
+
+
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            router.push("/login");
+          }}
+          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+        >
+          Çıkış Yap
+        </button>
 <input
   type="text"
   placeholder="🔍 İsim veya telefon ara..."
@@ -80,17 +91,7 @@ const cancelledBookings = bookings.filter(
   onChange={(e) => setSelectedDate(e.target.value)}
   className="w-full mb-6 p-4 rounded-xl bg-zinc-900 border border-yellow-500/20 text-white outline-none"
 />
-
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            router.push("/login");
-          }}
-          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
-        >
-          Çıkış Yap
-        </button>
-      </div>
+</div>
 
 
       <div className="mt-8 space-y-4">
@@ -150,6 +151,14 @@ const cancelledBookings = bookings.filter(
               📌 Durum:{" "}
               <span className="text-yellow-400">{booking.status}</span>
             </p>
+<a
+  href={`https://wa.me/90${booking.phone.replace(/\D/g, "")}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white"
+>
+  💬 WhatsApp
+</a>
 
             <div className="flex gap-3 mt-4">
               <button
