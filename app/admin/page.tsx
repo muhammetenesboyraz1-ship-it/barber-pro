@@ -9,6 +9,16 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const router = useRouter();
 
+
+
+const pendingBookings = bookings.filter(
+  (b) => b.status === "Bekliyor"
+).length;
+
+const completedBookings = bookings.filter(
+  (b) => b.status === "Tamamlandı"
+).length;
+
   useEffect(() => {
     async function loadPage() {
       const {
@@ -39,13 +49,9 @@ export default function AdminPage() {
 
 const totalBookings = bookings.length;
 
-const pendingBookings = bookings.filter(
-  (b) => b.status === "Bekliyor"
-).length;
 
-const completedBookings = bookings.filter(
-  (b) => b.status === "Tamamlandı"
-).length;
+
+
 
 const cancelledBookings = bookings.filter(
   (b) => b.status === "İptal"
@@ -58,37 +64,7 @@ const cancelledBookings = bookings.filter(
           Admin Paneli
         </h1>
 
-<div className="grid grid-cols-4 gap-4 mb-8">
 
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">Toplam</p>
-    <h2 className="text-3xl font-bold text-yellow-500">
-      {totalBookings}
-    </h2>
-  </div>
-
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">Bekleyen</p>
-    <h2 className="text-3xl font-bold text-yellow-500">
-      {pendingBookings}
-    </h2>
-  </div>
-
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">Tamamlanan</p>
-    <h2 className="text-3xl font-bold text-green-500">
-      {completedBookings}
-    </h2>
-  </div>
-
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">İptal</p>
-    <h2 className="text-3xl font-bold text-red-500">
-      {cancelledBookings}
-    </h2>
-  </div>
-
-</div>
 <input
   type="text"
   placeholder="🔍 İsim veya telefon ara..."
@@ -107,39 +83,30 @@ const cancelledBookings = bookings.filter(
           Çıkış Yap
         </button>
       </div>
-<div className="grid grid-cols-4 gap-4 mb-8">
 
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">Toplam</p>
-    <h2 className="text-3xl font-bold text-yellow-500">
-      {totalBookings}
-    </h2>
-  </div>
-
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">Bekleyen</p>
-    <h2 className="text-3xl font-bold text-yellow-500">
-      {pendingBookings}
-    </h2>
-  </div>
-
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">Tamamlanan</p>
-    <h2 className="text-3xl font-bold text-green-500">
-      {completedBookings}
-    </h2>
-  </div>
-
-  <div className="bg-zinc-900 p-5 rounded-xl border border-yellow-500/20">
-    <p className="text-gray-400">İptal</p>
-    <h2 className="text-3xl font-bold text-red-500">
-      {cancelledBookings}
-    </h2>
-  </div>
-
-</div>
 
       <div className="mt-8 space-y-4">
+<div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+  <div className="bg-zinc-900 rounded-xl p-6 border border-yellow-500/20">
+    
+    <h2 className="text-4xl font-bold text-yellow-500">{totalBookings}</h2>
+  </div>
+
+  <div className="bg-zinc-900 rounded-xl p-6 border border-blue-500/20">
+    <p className="text-gray-400">Bekliyor</p>
+    <h2 className="text-4xl font-bold text-blue-400">{pendingBookings}</h2>
+  </div>
+
+  <div className="bg-zinc-900 rounded-xl p-6 border border-green-500/20">
+    <p className="text-gray-400">Tamamlandı</p>
+    <h2 className="text-4xl font-bold text-green-400">{completedBookings}</h2>
+  </div>
+
+  <div className="bg-zinc-900 rounded-xl p-6 border border-red-500/20">
+    <p className="text-gray-400">İptal</p>
+    <h2 className="text-4xl font-bold text-red-400">{cancelledBookings}</h2>
+  </div>
+</div>
         {bookings
   .filter(
     (booking) =>

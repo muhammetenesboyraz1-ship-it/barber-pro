@@ -13,6 +13,18 @@ const [appointmentTime, setAppointmentTime] = useState("");
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  const { data: existingBooking } = await supabase
+  .from("bookings")
+  .select("*")
+  .eq("appointment_date", appointmentDate)
+  .eq("appointment_time", appointmentTime)
+  .maybeSingle();
+
+if (existingBooking) {
+  alert("Bu tarih ve saat için zaten bir randevu bulunmaktadır.");
+  return;
+}
+
   const { error } = await supabase.from("bookings").insert([
     {
       full_name: fullName,
