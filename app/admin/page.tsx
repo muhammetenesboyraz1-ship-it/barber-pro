@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 export default function AdminPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
   const router = useRouter();
 
 
