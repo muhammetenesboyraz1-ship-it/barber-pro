@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
 export default function BookingPage() {
@@ -8,7 +9,45 @@ const [phone, setPhone] = useState("");
 const [service, setService] = useState("Premium Saç Kesimi");
 const [appointmentDate, setAppointmentDate] = useState("");
 const [appointmentTime, setAppointmentTime] = useState("");
+const [availableTimes, setAvailableTimes] = useState<string[]>([]);
  
+useEffect(() => {
+  async function loadSettings() {
+    const { data } = await supabase
+      .from("business_settings")
+      .select("*")
+      .single();
+
+    if (!data) return;
+
+    const times: string[] = [];
+
+    let [hour, minute] = data.start_time.split(":").map(Number);
+    const [endHour, endMinute] = data.end_time.split(":").map(Number);
+
+    while (
+      hour < endHour ||
+      (hour === endHour && minute <= endMinute)
+    ) {
+      times.push(
+        `${hour.toString().padStart(2, "0")}:${minute
+          .toString()
+          .padStart(2, "0")}`
+      );
+
+      minute += data.slot_duration;
+
+      while (minute >= 60) {
+        minute -= 60;
+        hour++;
+      }
+    }
+
+    setAvailableTimes(times);
+  }
+
+  loadSettings();
+}, []);
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -111,17 +150,19 @@ return (
 />
 
           
-        <input
-  type="time"
+  <select
   value={appointmentTime}
   onChange={(e) => setAppointmentTime(e.target.value)}
   className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
-/>
+>
+  <option value="">Saat Seçiniz</option>
 
-          
-
-
-
+  {availableTimes.map((time) => (
+    <option key={time} value={time}>
+      {time}
+    </option>
+  ))}
+</select>
 
           <button
             type="submit"
