@@ -54,7 +54,7 @@ export default function Footer() {
        <div className="border-t border-yellow-500/20 mt-10 pt-8 text-center">
 
   <Link
-    href="/admin/login"
+    href="/login"
     className="text-yellow-500 hover:text-yellow-400 transition font-semibold"
   >
     Admin Girişi
