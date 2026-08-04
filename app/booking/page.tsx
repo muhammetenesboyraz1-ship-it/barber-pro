@@ -13,6 +13,16 @@ const [appointmentTime, setAppointmentTime] = useState("");
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+const selectedDate = new Date(appointmentDate);
+
+if (selectedDate < today) {
+  alert("Geçmiş tarihe randevu oluşturamazsınız.");
+  return;
+}
+
   const { data: existingBooking } = await supabase
   .from("bookings")
   .select("*")
