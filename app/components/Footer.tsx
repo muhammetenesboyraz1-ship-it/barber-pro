@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="bg-[#080808] border-t border-yellow-500/20 text-white py-12">
@@ -50,11 +51,24 @@ export default function Footer() {
 
         </div>
 
-        <div className="border-t border-yellow-500/20 mt-10 pt-8 text-center text-gray-500">
+       <div className="border-t border-yellow-500/20 mt-10 pt-8 text-center">
 
-          © 2026 Barber Pro. Tüm hakları saklıdır.
+  <Link
+    href="/admin/login"
+    className="text-yellow-500 hover:text-yellow-400 transition font-semibold"
+  >
+    Admin Girişi
+  </Link>
 
-        </div>
+  <p className="text-gray-500 mt-4">
+    © 2026 Barber Pro. Tüm hakları saklıdır.
+  </p>
+
+  <p className="text-gray-600 text-sm mt-2">
+    Powered by <span className="text-yellow-500 font-semibold">PoySoftware</span>
+  </p>
+
+</div>
 
       </div>
     </footer>
