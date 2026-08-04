@@ -1,8 +1,9 @@
 import Link from "next/link";
 export default function Hero() {
   return (
-    <section
-      className="relative h-screen bg-cover bg-center"
+  <section
+  id="anasayfa"
+  className="relative h-screen bg-cover bg-center"
       style={{
         backgroundImage: "url('/images/barber.jpg')",
       }}
