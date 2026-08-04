@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-black/70 backdrop-blur-md border-b border-yellow-500/20">
@@ -8,29 +9,49 @@ export default function Navbar() {
         </h1>
 
         <ul className="hidden md:flex gap-8 text-white">
-          <li className="hover:text-yellow-500 cursor-pointer transition">
-            Ana Sayfa
+          <li>
+            <a
+              href="#anasayfa"
+              className="hover:text-yellow-500 transition"
+            >
+              Ana Sayfa
+            </a>
           </li>
 
-          <li className="hover:text-yellow-500 cursor-pointer transition">
-            Hizmetler
+          <li>
+            <a
+              href="#hizmetler"
+              className="hover:text-yellow-500 transition"
+            >
+              Hizmetler
+            </a>
           </li>
 
-          <li className="hover:text-yellow-500 cursor-pointer transition">
-            Galeri
+          <li>
+            <a
+              href="#galeri"
+              className="hover:text-yellow-500 transition"
+            >
+              Galeri
+            </a>
           </li>
 
-          <li className="hover:text-yellow-500 cursor-pointer transition">
-            İletişim
+          <li>
+            <a
+              href="#iletisim"
+              className="hover:text-yellow-500 transition"
+            >
+              İletişim
+            </a>
           </li>
         </ul>
-<Link
-  href="/booking"
-  className="bg-yellow-500 text-black px-6 py-3 rounded-full font-bold hover:bg-yellow-400 transition"
->
-  Randevu Al
-</Link>
-        
+
+        <Link
+          href="/booking"
+          className="bg-yellow-500 text-black px-6 py-3 rounded-full font-bold hover:bg-yellow-400 transition"
+        >
+          Randevu Al
+        </Link>
       </div>
     </nav>
   );
