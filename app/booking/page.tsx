@@ -95,6 +95,7 @@ return (
           <input
   type="date"
   value={appointmentDate}
+  min={new Date().toISOString().split("T")[0]}
   onChange={(e) => setAppointmentDate(e.target.value)}
   className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
 />
