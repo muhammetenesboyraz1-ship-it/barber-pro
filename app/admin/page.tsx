@@ -87,10 +87,29 @@ const cancelledBookings = bookings.filter(
   return (
     <main className="min-h-screen bg-black text-white p-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-yellow-500">
-          Admin Paneli
-        </h1>
+       <h1 className="text-4xl font-bold text-yellow-500">
+  Admin Paneli
+</h1>
 
+<button
+  onClick={async () => {
+    if (!("Notification" in window)) {
+      alert("Bu cihaz bildirimleri desteklemiyor.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission === "granted") {
+      alert("Bildirim izni verildi 🔔");
+    } else {
+      alert("Bildirim izni verilmedi.");
+    }
+  }}
+  className="mt-4 bg-yellow-500 text-black px-5 py-3 rounded-lg font-bold"
+>
+  🔔 Bildirimleri Aç
+</button>
 
 
 
