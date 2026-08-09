@@ -21,7 +21,10 @@ export default function Services() {
   ];
 
   return (
-    <section className="bg-black text-white py-24">
+    <section
+  id="hizmetler"
+  className="bg-black text-white py-24"
+>
       <div className="max-w-7xl mx-auto px-6">
 
         <div className="text-center mb-16">

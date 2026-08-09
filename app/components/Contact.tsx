@@ -1,6 +1,9 @@
 export default function Contact() {
   return (
-    <section className="bg-black py-24 text-white">
+    <section
+  id="iletisim"
+  className="bg-black py-24 text-white"
+>
       <div className="max-w-7xl mx-auto px-6">
 
         <div className="text-center mb-16">
