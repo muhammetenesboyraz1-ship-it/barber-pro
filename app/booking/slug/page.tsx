@@ -226,14 +226,15 @@ const { data: serviceData, error: serviceError } = await supabase
     
 
     const { error } = await supabase.from("bookings").insert([
-      {
-        full_name: fullName,
-        phone,
-        service,
-        appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-      },
-    ]);
+  {
+    business_id: businessId,
+    full_name: fullName,
+    phone,
+    service,
+    appointment_date: appointmentDate,
+    appointment_time: appointmentTime,
+  },
+]);
 
     if (error) {
       alert("Randevu oluşturulamadı!");
