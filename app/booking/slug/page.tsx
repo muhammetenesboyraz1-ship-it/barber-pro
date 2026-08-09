@@ -41,11 +41,11 @@ if (businessError || !business) {
   return;
 }
 
-setBusinessId(business.id);
-      const { data: serviceData, error: serviceError } = await supabase
-        .from("services")
-        .select("*")
-        .order("id", { ascending: true });
+const { data: serviceData, error: serviceError } = await supabase
+  .from("services")
+  .select("*")
+  .eq("business_id", business.id)
+  .order("id", { ascending: true });
 
       if (serviceError) {
         console.error("Hizmetler alınamadı:", serviceError);
