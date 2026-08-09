@@ -40,6 +40,7 @@ if (businessError || !business) {
   console.error("İşletme bulunamadı:", businessError);
   return;
 }
+setBusinessId(business.id);
 
 const { data: serviceData, error: serviceError } = await supabase
   .from("services")
@@ -117,6 +118,11 @@ const { data: serviceData, error: serviceError } = await supabase
   }, []);
 
   async function loadAvailableTimes(date: string) {
+  if (!businessId) {
+    console.error("İşletme bulunamadı.");
+    return;
+  }
+
   if (!date) {
     setAvailableTimes(allTimes);
     return;
@@ -126,6 +132,7 @@ const { data: serviceData, error: serviceError } = await supabase
     "get_booked_times",
     {
       p_date: date,
+      p_business_id: businessId,
     }
   );
 
