@@ -173,10 +173,10 @@ if (!user) {
           error
         );
 
-        alert(
-          "Bildirim kaydedilemedi!\n\n" +
-            error.message
-        );
+       alert(
+  "SUPABASE HATASI:\n\n" +
+  JSON.stringify(error, null, 2)
+);
 
         return;
       }
