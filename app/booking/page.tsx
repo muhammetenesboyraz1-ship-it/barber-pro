@@ -19,6 +19,9 @@ export default function BookingPage() {
   const [appointmentTime, setAppointmentTime] = useState("");
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
 
+  // YENİ: Kapalı günleri tutuyoruz
+  const [closedDays, setClosedDays] = useState<string[]>([]);
+
   useEffect(() => {
     async function loadData() {
       // Hizmetleri getir
@@ -38,13 +41,36 @@ export default function BookingPage() {
       }
 
       // İşletme ayarlarını getir
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("business_settings")
         .select("*")
         .single();
 
-      if (!data) return;
+      if (error || !data) {
+        console.error("İşletme ayarları alınamadı:", error);
+        return;
+      }
 
+      // KAPALI GÜNLERİ AL
+     let normalizedClosedDays: string[] = [];
+
+if (Array.isArray(data.closed_days)) {
+  normalizedClosedDays = data.closed_days;
+} else if (typeof data.closed_days === "string") {
+  try {
+    const parsed = JSON.parse(data.closed_days);
+
+    if (Array.isArray(parsed)) {
+      normalizedClosedDays = parsed;
+    }
+  } catch {
+    console.log("Kapalı günler okunamadı.");
+  }
+}
+
+setClosedDays(normalizedClosedDays);
+
+      // Çalışma saatlerini oluştur
       const times: string[] = [];
 
       let [hour, minute] = data.start_time.split(":").map(Number);
@@ -85,10 +111,29 @@ export default function BookingPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const selectedDate = new Date(appointmentDate);
+    const selectedDate = new Date(appointmentDate + "T00:00:00");
 
     if (selectedDate < today) {
       alert("Geçmiş tarihe randevu oluşturamazsınız.");
+      return;
+    }
+
+    // Seçilen günün adını bul
+    const dayNames = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+
+    const selectedDay = dayNames[selectedDate.getDay()];
+
+    // Kapalı gün kontrolü
+    if (closedDays.includes(selectedDay)) {
+      alert("Bu gün işletme kapalıdır. Lütfen başka bir gün seçin.");
       return;
     }
 
@@ -133,6 +178,39 @@ export default function BookingPage() {
       setAppointmentTime("");
     }
   };
+
+  // TARİH SEÇİLDİĞİNDE KAPALI GÜNÜ KONTROL ET
+  function handleDateChange(value: string) {
+    if (!value) {
+      setAppointmentDate("");
+      setAppointmentTime("");
+      return;
+    }
+
+    const selectedDate = new Date(value + "T00:00:00");
+
+    const dayNames = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+
+    const selectedDay = dayNames[selectedDate.getDay()];
+
+    if (closedDays.includes(selectedDay)) {
+      alert("Bu gün işletme kapalıdır. Lütfen başka bir gün seçin.");
+      setAppointmentDate("");
+      setAppointmentTime("");
+      return;
+    }
+
+    setAppointmentDate(value);
+    setAppointmentTime("");
+  }
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-24">
@@ -184,7 +262,7 @@ export default function BookingPage() {
             type="date"
             value={appointmentDate}
             min={new Date().toISOString().split("T")[0]}
-            onChange={(e) => setAppointmentDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           />
