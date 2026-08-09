@@ -18,13 +18,11 @@ export default function BookingPage() {
   const [appointmentDate, setAppointmentDate] = useState("");
   const [appointmentTime, setAppointmentTime] = useState("");
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
-
-  // YENİ: Kapalı günleri tutuyoruz
+  const [allTimes, setAllTimes] = useState<string[]>([]);
   const [closedDays, setClosedDays] = useState<string[]>([]);
 
   useEffect(() => {
     async function loadData() {
-      // Hizmetleri getir
       const { data: serviceData, error: serviceError } = await supabase
         .from("services")
         .select("*")
@@ -40,7 +38,6 @@ export default function BookingPage() {
         }
       }
 
-      // İşletme ayarlarını getir
       const { data, error } = await supabase
         .from("business_settings")
         .select("*")
@@ -51,26 +48,24 @@ export default function BookingPage() {
         return;
       }
 
-      // KAPALI GÜNLERİ AL
-     let normalizedClosedDays: string[] = [];
+      let normalizedClosedDays: string[] = [];
 
-if (Array.isArray(data.closed_days)) {
-  normalizedClosedDays = data.closed_days;
-} else if (typeof data.closed_days === "string") {
-  try {
-    const parsed = JSON.parse(data.closed_days);
+      if (Array.isArray(data.closed_days)) {
+        normalizedClosedDays = data.closed_days;
+      } else if (typeof data.closed_days === "string") {
+        try {
+          const parsed = JSON.parse(data.closed_days);
 
-    if (Array.isArray(parsed)) {
-      normalizedClosedDays = parsed;
-    }
-  } catch {
-    console.log("Kapalı günler okunamadı.");
-  }
-}
+          if (Array.isArray(parsed)) {
+            normalizedClosedDays = parsed;
+          }
+        } catch {
+          console.log("Kapalı günler okunamadı.");
+        }
+      }
 
-setClosedDays(normalizedClosedDays);
+      setClosedDays(normalizedClosedDays);
 
-      // Çalışma saatlerini oluştur
       const times: string[] = [];
 
       let [hour, minute] = data.start_time.split(":").map(Number);
@@ -94,31 +89,60 @@ setClosedDays(normalizedClosedDays);
         }
       }
 
+      setAllTimes(times);
       setAvailableTimes(times);
     }
 
     loadData();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!service) {
-      alert("Lütfen bir hizmet seçin.");
+  async function loadAvailableTimes(date: string) {
+    if (!date) {
+      setAvailableTimes(allTimes);
       return;
     }
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("appointment_time")
+      .eq("appointment_date", date);
+
+    if (error) {
+      console.error("Randevular alınamadı:", error);
+      return;
+    }
+
+    const bookedTimes = (data || []).map(
+      (booking) => booking.appointment_time.slice(0, 5)
+    );
+
+    const freeTimes = allTimes.filter(
+      (time) => !bookedTimes.includes(time)
+    );
+
+    setAvailableTimes(freeTimes);
+
+    setAppointmentTime("");
+  }
+
+  function handleDateChange(value: string) {
+    if (!value) {
+      setAppointmentDate("");
+      setAppointmentTime("");
+      setAvailableTimes(allTimes);
+      return;
+    }
+
+    const selectedDate = new Date(value + "T00:00:00");
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const selectedDate = new Date(appointmentDate + "T00:00:00");
-
     if (selectedDate < today) {
-      alert("Geçmiş tarihe randevu oluşturamazsınız.");
+      alert("Geçmiş bir tarih seçemezsiniz.");
       return;
     }
 
-    // Seçilen günün adını bul
     const dayNames = [
       "sunday",
       "monday",
@@ -131,9 +155,50 @@ setClosedDays(normalizedClosedDays);
 
     const selectedDay = dayNames[selectedDate.getDay()];
 
-    // Kapalı gün kontrolü
     if (closedDays.includes(selectedDay)) {
       alert("Bu gün işletme kapalıdır. Lütfen başka bir gün seçin.");
+      setAppointmentDate("");
+      setAppointmentTime("");
+      setAvailableTimes(allTimes);
+      return;
+    }
+
+    setAppointmentDate(value);
+
+    loadAvailableTimes(value);
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!service) {
+      alert("Lütfen bir hizmet seçin.");
+      return;
+    }
+
+    if (!appointmentDate || !appointmentTime) {
+      alert("Lütfen tarih ve saat seçin.");
+      return;
+    }
+
+    const selectedDate = new Date(
+      appointmentDate + "T00:00:00"
+    );
+
+    const dayNames = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+
+    const selectedDay = dayNames[selectedDate.getDay()];
+
+    if (closedDays.includes(selectedDay)) {
+      alert("Bu gün işletme kapalıdır.");
       return;
     }
 
@@ -145,7 +210,8 @@ setClosedDays(normalizedClosedDays);
       .maybeSingle();
 
     if (existingBooking) {
-      alert("Bu tarih ve saat için zaten bir randevu bulunmaktadır.");
+      alert("Bu saat az önce başka bir müşteri tarafından alındı.");
+      await loadAvailableTimes(appointmentDate);
       return;
     }
 
@@ -161,7 +227,7 @@ setClosedDays(normalizedClosedDays);
 
     if (error) {
       alert("Randevu oluşturulamadı!");
-      console.log(error);
+      console.error(error);
     } else {
       alert("Randevunuz başarıyla oluşturuldu!");
 
@@ -176,41 +242,9 @@ setClosedDays(normalizedClosedDays);
 
       setAppointmentDate("");
       setAppointmentTime("");
+      setAvailableTimes(allTimes);
     }
   };
-
-  // TARİH SEÇİLDİĞİNDE KAPALI GÜNÜ KONTROL ET
-  function handleDateChange(value: string) {
-    if (!value) {
-      setAppointmentDate("");
-      setAppointmentTime("");
-      return;
-    }
-
-    const selectedDate = new Date(value + "T00:00:00");
-
-    const dayNames = [
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-    ];
-
-    const selectedDay = dayNames[selectedDate.getDay()];
-
-    if (closedDays.includes(selectedDay)) {
-      alert("Bu gün işletme kapalıdır. Lütfen başka bir gün seçin.");
-      setAppointmentDate("");
-      setAppointmentTime("");
-      return;
-    }
-
-    setAppointmentDate(value);
-    setAppointmentTime("");
-  }
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-24">
@@ -273,7 +307,13 @@ setClosedDays(normalizedClosedDays);
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           >
-            <option value="">Saat seçin</option>
+            <option value="">
+              {appointmentDate
+                ? availableTimes.length > 0
+                  ? "Boş saat seçin"
+                  : "Bu gün boş saat yok"
+                : "Önce tarih seçin"}
+            </option>
 
             {availableTimes.map((time) => (
               <option key={time} value={time}>
