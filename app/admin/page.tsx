@@ -3,7 +3,16 @@
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
 
+  const rawData = window.atob(base64);
+
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
 export default function AdminPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -208,13 +217,60 @@ const cancelledBookings = bookings.filter(
             <div className="flex gap-3 mt-4">
               <button
                 onClick={async () => {
-                  const { error } = await supabase
-                    .from("bookings")
-                    .update({ status: "Tamamlandı" })
-                    .eq("id", booking.id);
+  if (!("Notification" in window)) {
+    alert("Bu cihaz bildirimleri desteklemiyor.");
+    return;
+  }
 
-                  if (!error) getBookings();
-                }}
+  const permission = await Notification.requestPermission();
+
+  if (permission !== "granted") {
+    alert("Bildirim izni verilmedi.");
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register("/sw.js");
+
+    const existingSubscription =
+      await registration.pushManager.getSubscription();
+
+    const subscription =
+      existingSubscription ||
+      await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+        ),
+      });
+
+    const subscriptionJson = subscription.toJSON();
+
+    const { error } = await supabase
+      .from("push_subscriptions")
+      .upsert(
+        {
+          endpoint: subscriptionJson.endpoint,
+          p256dh: subscriptionJson.keys?.p256dh,
+          auth: subscriptionJson.keys?.auth,
+        },
+        {
+          onConflict: "endpoint",
+        }
+      );
+
+    if (error) {
+      console.error("Push aboneliği kaydedilemedi:", error);
+      alert("Bildirim kaydedilemedi!");
+      return;
+    }
+
+    alert("Bildirimler başarıyla aktif edildi! 🔔");
+  } catch (error) {
+    console.error("Bildirim sistemi hatası:", error);
+    alert("Bildirim sistemi kurulamadı!");
+  }
+}}
                 className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white"
               >
                 ✅ Tamamlandı
