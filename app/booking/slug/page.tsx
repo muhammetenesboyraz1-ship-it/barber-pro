@@ -58,9 +58,10 @@ const { data: serviceData, error: serviceError } = await supabase
       }
 
       const { data, error } = await supabase
-        .from("business_settings")
-        .select("*")
-        .single();
+  .from("business_settings")
+  .select("*")
+  .eq("business_id", business.id)
+  .single();
 
       if (error || !data) {
         console.error("İşletme ayarları alınamadı:", error);
