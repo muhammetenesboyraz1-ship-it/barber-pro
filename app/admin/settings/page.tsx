@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 type Settings = {
   id: number;
@@ -21,28 +22,40 @@ const days = [
 ];
 
 export default function SettingsPage() {
+
+const router = useRouter();
+
   const [settings, setSettings] = useState<Settings | null>(null);
 
-  useEffect(() => {
-    async function loadSettings() {
-      const { data, error } = await supabase
-        .from("business_settings")
-        .select("*")
-        .single();
+ useEffect(() => {
+  async function checkAuthAndLoadSettings() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      setSettings({
-        ...data,
-        closed_days: data.closed_days || [],
-      });
+    if (!session) {
+      router.push("/login");
+      return;
     }
 
-    loadSettings();
-  }, []);
+    const { data, error } = await supabase
+      .from("business_settings")
+      .select("*")
+      .single();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setSettings({
+      ...data,
+      closed_days: data.closed_days || [],
+    });
+  }
+
+  checkAuthAndLoadSettings();
+}, [router]);
 
   function toggleClosedDay(day: string) {
     if (!settings) return;
