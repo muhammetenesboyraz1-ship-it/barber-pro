@@ -97,34 +97,35 @@ export default function BookingPage() {
   }, []);
 
   async function loadAvailableTimes(date: string) {
-    if (!date) {
-      setAvailableTimes(allTimes);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("appointment_time")
-      .eq("appointment_date", date);
-
-    if (error) {
-      console.error("Randevular alınamadı:", error);
-      return;
-    }
-
-    const bookedTimes = (data || []).map(
-      (booking) => booking.appointment_time.slice(0, 5)
-    );
-
-    const freeTimes = allTimes.filter(
-      (time) => !bookedTimes.includes(time)
-    );
-
-    setAvailableTimes(freeTimes);
-
-    setAppointmentTime("");
+  if (!date) {
+    setAvailableTimes(allTimes);
+    return;
   }
 
+  const { data, error } = await supabase.rpc(
+    "get_booked_times",
+    {
+      p_date: date,
+    }
+  );
+
+  if (error) {
+    console.error("Dolu saatler alınamadı:", error);
+    return;
+  }
+
+  const bookedTimes = (data || []).map(
+    (booking: { appointment_time: string }) =>
+      booking.appointment_time.slice(0, 5)
+  );
+
+  const freeTimes = allTimes.filter(
+    (time) => !bookedTimes.includes(time)
+  );
+
+  setAvailableTimes(freeTimes);
+  setAppointmentTime("");
+}
   function handleDateChange(value: string) {
     if (!value) {
       setAppointmentDate("");
@@ -202,18 +203,7 @@ export default function BookingPage() {
       return;
     }
 
-    const { data: existingBooking } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("appointment_date", appointmentDate)
-      .eq("appointment_time", appointmentTime)
-      .maybeSingle();
-
-    if (existingBooking) {
-      alert("Bu saat az önce başka bir müşteri tarafından alındı.");
-      await loadAvailableTimes(appointmentDate);
-      return;
-    }
+    
 
     const { error } = await supabase.from("bookings").insert([
       {
