@@ -249,11 +249,12 @@ const cancelledBookings = bookings.filter(
     const { error } = await supabase
       .from("push_subscriptions")
       .upsert(
-        {
-          endpoint: subscriptionJson.endpoint,
-          p256dh: subscriptionJson.keys?.p256dh,
-          auth: subscriptionJson.keys?.auth,
-        },
+  {
+    endpoint: subscriptionJson.endpoint,
+    p256dh: subscriptionJson.keys?.p256dh,
+    auth: subscriptionJson.keys?.auth,
+    business_id: "9e429d42-7b6b-47e6-8cad-5d0cbd1bcb75",
+  },
         {
           onConflict: "endpoint",
         }
