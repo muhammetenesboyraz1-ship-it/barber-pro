@@ -36,6 +36,32 @@ const completedBookings = bookings.filter(
 
     loadPage();
   }, []);
+  useEffect(() => {
+  const channel = supabase
+    .channel("new-bookings")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "bookings",
+      },
+      (payload) => {
+        console.log("YENİ RANDEVU:", payload.new);
+
+        alert(
+          `🔔 Yeni Randevu!\n\n${payload.new.full_name}\n${payload.new.appointment_date} - ${payload.new.appointment_time}`
+        );
+
+        getBookings();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   async function getBookings() {
     const { data, error } = await supabase
