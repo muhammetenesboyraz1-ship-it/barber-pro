@@ -144,7 +144,14 @@ export default function AdminPage() {
         alert("Push aboneliği oluşturulamadı.");
         return;
       }
+const { data: { user } } = await supabase.auth.getUser();
 
+console.log("GİRİŞ YAPAN USER:", user);
+
+if (!user) {
+  alert("Oturum bulunamadı! Tekrar giriş yap.");
+  return;
+}
       // Supabase'e kaydet
       const { error } = await supabase
         .from("push_subscriptions")
