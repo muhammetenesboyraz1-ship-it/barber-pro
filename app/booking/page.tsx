@@ -346,6 +346,22 @@ export default function BookingPage() {
       return;
     }
 
+// Admin'e bildirim gönder
+try {
+  await fetch("/api/send-notification", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "🔔 Yeni Randevu",
+      body: `${fullName} - ${appointmentDate} ${appointmentTime}`,
+    }),
+  });
+} catch (notificationError) {
+  console.error("Bildirim gönderilemedi:", notificationError);
+}
+
     // Başarılı
     alert(
       "Randevunuz başarıyla oluşturuldu!"
