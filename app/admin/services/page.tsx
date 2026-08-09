@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 type Service = {
   id: number;
@@ -11,6 +12,7 @@ type Service = {
 };
 
 export default function ServicesAdmin() {
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -32,9 +34,22 @@ export default function ServicesAdmin() {
     setServices(data || []);
   }
 
-  useEffect(() => {
+ useEffect(() => {
+  async function checkAuth() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
     getServices();
-  }, []);
+  }
+
+  checkAuth();
+}, []);
 
   async function addService() {
     if (!name || !price || !duration) {
