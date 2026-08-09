@@ -311,21 +311,16 @@ export default function BookingPage() {
     }
 
     // Randevuyu kaydet
-    const { error } =
-      await supabase
-        .from("bookings")
-        .insert([
-          {
-            full_name: fullName,
-            phone,
-            service,
-            appointment_date:
-              appointmentDate,
-            appointment_time:
-              appointmentTime,
-          },
-        ]);
-
+   const { error } = await supabase.from("bookings").insert([
+  {
+    business_id: "9e429d42-7b6b-47e6-8cad-5d0cbd1bcb75",
+    full_name: fullName,
+    phone,
+    service,
+    appointment_date: appointmentDate,
+    appointment_time: appointmentTime,
+  },
+]);
     if (error) {
       alert(
         `Randevu oluşturulamadı!\n\n` +
