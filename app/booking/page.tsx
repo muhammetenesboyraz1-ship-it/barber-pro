@@ -23,60 +23,89 @@ export default function BookingPage() {
 
   useEffect(() => {
     async function loadData() {
-      const { data: serviceData, error: serviceError } = await supabase
+      // Hizmetleri getir
+      const {
+        data: serviceData,
+        error: serviceError,
+      } = await supabase
         .from("services")
         .select("*")
         .order("id", { ascending: true });
 
       if (serviceError) {
-        console.error("Hizmetler alınamadı:", serviceError);
+        console.error(
+          "Hizmetler alınamadı:",
+          serviceError
+        );
       } else {
         setServices(serviceData || []);
 
-        if (serviceData && serviceData.length > 0) {
+        if (
+          serviceData &&
+          serviceData.length > 0
+        ) {
           setService(serviceData[0].name);
         }
       }
 
+      // İşletme ayarlarını getir
       const { data, error } = await supabase
         .from("business_settings")
         .select("*")
         .single();
 
       if (error || !data) {
-        console.error("İşletme ayarları alınamadı:", error);
+        console.error(
+          "İşletme ayarları alınamadı:",
+          error
+        );
         return;
       }
 
+      // Kapalı günleri düzenle
       let normalizedClosedDays: string[] = [];
 
       if (Array.isArray(data.closed_days)) {
         normalizedClosedDays = data.closed_days;
-      } else if (typeof data.closed_days === "string") {
+      } else if (
+        typeof data.closed_days === "string"
+      ) {
         try {
-          const parsed = JSON.parse(data.closed_days);
+          const parsed = JSON.parse(
+            data.closed_days
+          );
 
           if (Array.isArray(parsed)) {
             normalizedClosedDays = parsed;
           }
         } catch {
-          console.log("Kapalı günler okunamadı.");
+          console.log(
+            "Kapalı günler okunamadı."
+          );
         }
       }
 
       setClosedDays(normalizedClosedDays);
 
+      // Çalışma saatlerini oluştur
       const times: string[] = [];
 
-      let [hour, minute] = data.start_time.split(":").map(Number);
-      const [endHour, endMinute] = data.end_time.split(":").map(Number);
+      let [hour, minute] = data.start_time
+        .split(":")
+        .map(Number);
+
+      const [endHour, endMinute] =
+        data.end_time.split(":").map(Number);
 
       while (
         hour < endHour ||
-        (hour === endHour && minute <= endMinute)
+        (hour === endHour &&
+          minute <= endMinute)
       ) {
         times.push(
-          `${hour.toString().padStart(2, "0")}:${minute
+          `${hour
+            .toString()
+            .padStart(2, "0")}:${minute
             .toString()
             .padStart(2, "0")}`
         );
@@ -96,36 +125,54 @@ export default function BookingPage() {
     loadData();
   }, []);
 
-  async function loadAvailableTimes(date: string) {
-  if (!date) {
-    setAvailableTimes(allTimes);
-    return;
-  }
-
-  const { data, error } = await supabase.rpc(
-    "get_booked_times",
-    {
-      p_date: date,
+  // Seçilen güne göre boş saatleri getir
+  async function loadAvailableTimes(
+    date: string
+  ) {
+    if (!date) {
+      setAvailableTimes(allTimes);
+      return;
     }
-  );
 
-  if (error) {
-    console.error("Dolu saatler alınamadı:", error);
-    return;
+    const { data, error } =
+      await supabase.rpc(
+        "get_booked_times",
+        {
+          p_date: date,
+        }
+      );
+
+    if (error) {
+      console.error(
+        "Dolu saatler alınamadı:",
+        error
+      );
+
+      // RPC hata verirse en azından
+      // mevcut saatleri göster
+      setAvailableTimes(allTimes);
+      return;
+    }
+
+    const bookedTimes = (
+      data || []
+    ).map(
+      (booking: {
+        appointment_time: string;
+      }) =>
+        booking.appointment_time.slice(0, 5)
+    );
+
+    const freeTimes = allTimes.filter(
+      (time) =>
+        !bookedTimes.includes(time)
+    );
+
+    setAvailableTimes(freeTimes);
+    setAppointmentTime("");
   }
 
-  const bookedTimes = (data || []).map(
-    (booking: { appointment_time: string }) =>
-      booking.appointment_time.slice(0, 5)
-  );
-
-  const freeTimes = allTimes.filter(
-    (time) => !bookedTimes.includes(time)
-  );
-
-  setAvailableTimes(freeTimes);
-  setAppointmentTime("");
-}
+  // Tarih değişince
   function handleDateChange(value: string) {
     if (!value) {
       setAppointmentDate("");
@@ -134,13 +181,17 @@ export default function BookingPage() {
       return;
     }
 
-    const selectedDate = new Date(value + "T00:00:00");
+    const selectedDate = new Date(
+      value + "T00:00:00"
+    );
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate < today) {
-      alert("Geçmiş bir tarih seçemezsiniz.");
+      alert(
+        "Geçmiş bir tarih seçemezsiniz."
+      );
       return;
     }
 
@@ -154,13 +205,20 @@ export default function BookingPage() {
       "saturday",
     ];
 
-    const selectedDay = dayNames[selectedDate.getDay()];
+    const selectedDay =
+      dayNames[selectedDate.getDay()];
 
-    if (closedDays.includes(selectedDay)) {
-      alert("Bu gün işletme kapalıdır. Lütfen başka bir gün seçin.");
+    if (
+      closedDays.includes(selectedDay)
+    ) {
+      alert(
+        "Bu gün işletme kapalıdır. Lütfen başka bir gün seçin."
+      );
+
       setAppointmentDate("");
       setAppointmentTime("");
       setAvailableTimes(allTimes);
+
       return;
     }
 
@@ -169,7 +227,10 @@ export default function BookingPage() {
     loadAvailableTimes(value);
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Randevu oluştur
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
 
     if (!service) {
@@ -177,8 +238,13 @@ export default function BookingPage() {
       return;
     }
 
-    if (!appointmentDate || !appointmentTime) {
-      alert("Lütfen tarih ve saat seçin.");
+    if (
+      !appointmentDate ||
+      !appointmentTime
+    ) {
+      alert(
+        "Lütfen tarih ve saat seçin."
+      );
       return;
     }
 
@@ -196,51 +262,119 @@ export default function BookingPage() {
       "saturday",
     ];
 
-    const selectedDay = dayNames[selectedDate.getDay()];
+    const selectedDay =
+      dayNames[selectedDate.getDay()];
 
-    if (closedDays.includes(selectedDay)) {
-      alert("Bu gün işletme kapalıdır.");
+    if (
+      closedDays.includes(selectedDay)
+    ) {
+      alert(
+        "Bu gün işletme kapalıdır."
+      );
       return;
     }
 
-    
+    // Aynı saat daha önce alınmış mı?
+    const {
+      data: existingBooking,
+      error: existingBookingError,
+    } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq(
+        "appointment_date",
+        appointmentDate
+      )
+      .eq(
+        "appointment_time",
+        appointmentTime
+      )
+      .maybeSingle();
 
-    const { error } = await supabase.from("bookings").insert([
-      {
-        full_name: fullName,
-        phone,
-        service,
-        appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-      },
-    ]);
+    if (existingBookingError) {
+      console.error(
+        "Mevcut randevu kontrolü hatası:",
+        existingBookingError
+      );
+    }
+
+    if (existingBooking) {
+      alert(
+        "Bu saat az önce başka bir müşteri tarafından alındı."
+      );
+
+      await loadAvailableTimes(
+        appointmentDate
+      );
+
+      return;
+    }
+
+    // Randevuyu kaydet
+    const { error } =
+      await supabase
+        .from("bookings")
+        .insert([
+          {
+            full_name: fullName,
+            phone,
+            service,
+            appointment_date:
+              appointmentDate,
+            appointment_time:
+              appointmentTime,
+          },
+        ]);
 
     if (error) {
-      alert("Randevu oluşturulamadı!");
-      console.error(error);
-    } else {
-      alert("Randevunuz başarıyla oluşturuldu!");
+      alert(
+        `Randevu oluşturulamadı!\n\n` +
+          `Mesaj: ${
+            error.message
+          }\n` +
+          `Kod: ${
+            error.code
+          }\n` +
+          `Detay: ${
+            error.details || "Yok"
+          }\n` +
+          `İpucu: ${
+            error.hint || "Yok"
+          }`
+      );
 
-      setFullName("");
-      setPhone("");
+      console.error(
+        "SUPABASE HATASI:",
+        error
+      );
 
-      if (services.length > 0) {
-        setService(services[0].name);
-      } else {
-        setService("");
-      }
-
-      setAppointmentDate("");
-      setAppointmentTime("");
-      setAvailableTimes(allTimes);
+      return;
     }
+
+    // Başarılı
+    alert(
+      "Randevunuz başarıyla oluşturuldu!"
+    );
+
+    setFullName("");
+    setPhone("");
+
+    if (services.length > 0) {
+      setService(
+        services[0].name
+      );
+    } else {
+      setService("");
+    }
+
+    setAppointmentDate("");
+    setAppointmentTime("");
+    setAvailableTimes(allTimes);
   };
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-24">
-
+    <main className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="bg-[#161616] w-full max-w-xl p-10 rounded-3xl border border-yellow-500/20">
-
         <h1 className="text-4xl font-bold text-yellow-500 text-center">
           Online Randevu
         </h1>
@@ -249,13 +383,17 @@ export default function BookingPage() {
           Lütfen bilgilerinizi doldurun.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-10 space-y-5">
-
+        <form
+          onSubmit={handleSubmit}
+          className="mt-10 space-y-5"
+        >
           <input
             type="text"
             placeholder="Ad Soyad"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(e) =>
+              setFullName(e.target.value)
+            }
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           />
@@ -264,20 +402,28 @@ export default function BookingPage() {
             type="tel"
             placeholder="Telefon"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) =>
+              setPhone(e.target.value)
+            }
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           />
 
           <select
             value={service}
-            onChange={(e) => setService(e.target.value)}
+            onChange={(e) =>
+              setService(e.target.value)
+            }
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           >
             {services.map((item) => (
-              <option key={item.id} value={item.name}>
-                {item.name} - {item.price} ₺ ({item.duration} dk)
+              <option
+                key={item.id}
+                value={item.name}
+              >
+                {item.name} - {item.price} ₺ (
+                {item.duration} dk)
               </option>
             ))}
           </select>
@@ -285,31 +431,49 @@ export default function BookingPage() {
           <input
             type="date"
             value={appointmentDate}
-            min={new Date().toISOString().split("T")[0]}
-            onChange={(e) => handleDateChange(e.target.value)}
+            min={
+              new Date()
+                .toISOString()
+                .split("T")[0]
+            }
+            onChange={(e) =>
+              handleDateChange(
+                e.target.value
+              )
+            }
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           />
 
           <select
             value={appointmentTime}
-            onChange={(e) => setAppointmentTime(e.target.value)}
+            onChange={(e) =>
+              setAppointmentTime(
+                e.target.value
+              )
+            }
             className="w-full p-4 rounded-xl bg-black border border-gray-700 text-white"
             required
           >
             <option value="">
               {appointmentDate
-                ? availableTimes.length > 0
+                ? availableTimes.length >
+                  0
                   ? "Boş saat seçin"
                   : "Bu gün boş saat yok"
                 : "Önce tarih seçin"}
             </option>
 
-            {availableTimes.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
+            {availableTimes.map(
+              (time) => (
+                <option
+                  key={time}
+                  value={time}
+                >
+                  {time}
+                </option>
+              )
+            )}
           </select>
 
           <button
@@ -318,11 +482,8 @@ export default function BookingPage() {
           >
             Randevu Oluştur
           </button>
-
         </form>
-
       </div>
-
     </main>
   );
 }
