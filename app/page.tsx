@@ -13,7 +13,7 @@ export default function PoySoftwareHome() {
             <a href="#urunler" className="transition hover:text-yellow-400">
               Ürünler
             </a>
-            <a href="#araclar" className="transition hover:text-yellow-400">
+            <a href="/tools" className="transition hover:text-yellow-400">
               Ücretsiz Araçlar
             </a>
             <a href="#blog" className="transition hover:text-yellow-400">
@@ -57,7 +57,7 @@ export default function PoySoftwareHome() {
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <a
-                href="#araclar"
+                href="/tools"
                 className="rounded-xl bg-yellow-500 px-7 py-4 text-center font-bold text-black transition hover:bg-yellow-400"
               >
                 Ücretsiz Araçları Keşfet
@@ -314,7 +314,7 @@ export default function PoySoftwareHome() {
           </p>
 
           <a
-            href="#araclar"
+            href="/tools"
             className="mt-9 inline-block rounded-xl bg-yellow-500 px-8 py-4 font-bold text-black transition hover:bg-yellow-400"
           >
             Araçları Keşfet
@@ -341,7 +341,7 @@ export default function PoySoftwareHome() {
                 Ürünler
               </a>
 
-              <a href="#araclar" className="hover:text-white">
+              <a href="/tools" className="hover:text-white">
                 Araçlar
               </a>
 
