@@ -16,7 +16,7 @@ export default function PoySoftwareHome() {
             <a href="/tools" className="transition hover:text-yellow-400">
               Ücretsiz Araçlar
             </a>
-            <a href="#blog" className="transition hover:text-yellow-400">
+            <a href="/blog" className="transition hover:text-yellow-400">
               Blog
             </a>
             <a href="#iletisim" className="transition hover:text-yellow-400">
@@ -345,7 +345,7 @@ export default function PoySoftwareHome() {
                 Araçlar
               </a>
 
-              <a href="#blog" className="hover:text-white">
+              <a href="/blog" className="hover:text-white">
                 Blog
               </a>
 
