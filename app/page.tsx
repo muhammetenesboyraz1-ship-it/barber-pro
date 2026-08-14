@@ -1,3 +1,18 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "PoySoftware | Modern Yazılımlar ve Ücretsiz Araçlar",
+  description:
+    "PoySoftware; işletmeler için modern yazılımlar, ücretsiz online araçlar ve teknoloji içerikleri geliştirir.",
+  keywords: [
+    "PoySoftware",
+    "yazılım",
+    "ücretsiz araçlar",
+    "online araçlar",
+    "SaaS",
+    "teknoloji",
+  ],
+};
 export default function PoySoftwareHome() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
