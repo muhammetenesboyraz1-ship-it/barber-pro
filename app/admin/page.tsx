@@ -1,440 +1,363 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-
-  const rawData = window.atob(base64);
-
-  return Uint8Array.from(
-    [...rawData].map((char) => char.charCodeAt(0))
-  );
-}
+type Blog = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  keywords?: string[] | string | null;
+  status?: string | null;
+  published_at?: string | null;
+  created_at?: string | null;
+};
 
 export default function AdminPage() {
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
 
-  const router = useRouter();
-
-  const pendingBookings = bookings.filter(
-    (b) => b.status === "Bekliyor"
-  ).length;
-
-  const completedBookings = bookings.filter(
-    (b) => b.status === "Tamamlandı"
-  ).length;
-
-  const cancelledBookings = bookings.filter(
-    (b) => b.status === "İptal"
-  ).length;
-
-  const totalBookings = bookings.length;
-
-  useEffect(() => {
-    async function loadPage() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push("/login");
-        return;
-      }
-
-      getBookings();
-    }
-
-    loadPage();
-  }, []);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("new-bookings")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "bookings",
-        },
-        (payload) => {
-          console.log("YENİ RANDEVU:", payload.new);
-
-          alert(
-            `🔔 Yeni Randevu!\n\n${payload.new.full_name}\n${payload.new.appointment_date} - ${payload.new.appointment_time}`
-          );
-
-          getBookings();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  async function getBookings() {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .order("id", { ascending: false });
-
-    if (!error) {
-      setBookings(data || []);
-    } else {
-      console.error("Randevular alınamadı:", error);
-    }
-  }
-
-  // 🔔 GERÇEK PUSH BİLDİRİMİ AKTİFLEŞTİR
-  async function enableNotifications() {
+  async function loadBlogs() {
     try {
-      if (!("Notification" in window)) {
-        alert("Bu cihaz bildirimleri desteklemiyor.");
-        return;
+      setLoading(true);
+
+      const response = await fetch("/api/admin/blogs", {
+        cache: "no-store",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Bloglar alınamadı.");
       }
 
-      const permission = await Notification.requestPermission();
-
-      if (permission !== "granted") {
-        alert("Bildirim izni verilmedi.");
-        return;
-      }
-
-      // Service Worker kaydı
-      const registration =
-        await navigator.serviceWorker.register("/sw.js");
-
-      // Service Worker hazır olana kadar bekle
-      await navigator.serviceWorker.ready;
-
-      // Daha önce abonelik var mı?
-      const existingSubscription =
-        await registration.pushManager.getSubscription();
-
-      // Varsa onu kullan, yoksa yeni oluştur
-      const subscription =
-        existingSubscription ||
-        await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-          ),
-        });
-
-      const subscriptionJson = subscription.toJSON();
-
-      console.log("Push subscription:", subscriptionJson);
-
-      if (
-        !subscriptionJson.endpoint ||
-        !subscriptionJson.keys?.p256dh ||
-        !subscriptionJson.keys?.auth
-      ) {
-        alert("Push aboneliği oluşturulamadı.");
-        return;
-      }
-const { data: { user } } = await supabase.auth.getUser();
-
-console.log("GİRİŞ YAPAN USER:", user);
-
-if (!user) {
-  alert("Oturum bulunamadı! Tekrar giriş yap.");
-  return;
-}
-      // Supabase'e kaydet
-      const { error } = await supabase
-        .from("push_subscriptions")
-        .upsert(
-          {
-            endpoint: subscriptionJson.endpoint,
-            p256dh: subscriptionJson.keys.p256dh,
-            auth: subscriptionJson.keys.auth,
-            business_id: "9e429d42-7b6b-47e6-8cad-5d0cbd1bcb75",
-          },
-          {
-            onConflict: "endpoint",
-          }
-        );
-
-      if (error) {
-        console.error(
-          "Push aboneliği kaydedilemedi:",
-          error
-        );
-
-       alert(
-  "SUPABASE HATASI:\n\n" +
-  JSON.stringify(error, null, 2)
-);
-
-        return;
-      }
-
-      alert("Bildirimler başarıyla aktif edildi! 🔔");
-    } catch (error) {
-      console.error(
-        "Bildirim sistemi hatası:",
-        error
-      );
-
-      alert(
-        "Bildirim sistemi kurulamadı!\n\n" +
-          String(error)
-      );
+      setBlogs(result.blogs || []);
+    } catch (error: any) {
+      setMessage(error?.message || "Bir hata oluştu.");
+    } finally {
+      setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadBlogs();
+  }, []);
+
+  async function deleteBlog(id: number) {
+    const confirmed = window.confirm(
+      "Bu blogu silmek istediğine emin misin?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setMessage("");
+
+      const response = await fetch("/api/admin/blogs", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Blog silinemedi.");
+      }
+
+      setBlogs((current) =>
+        current.filter((blog) => blog.id !== id)
+      );
+
+      setMessage("Blog başarıyla silindi.");
+    } catch (error: any) {
+      setMessage(error?.message || "Blog silinemedi.");
+    }
+  }
+
+  async function toggleStatus(blog: Blog) {
+    const newStatus =
+      blog.status === "published" ? "draft" : "published";
+
+    try {
+      setMessage("");
+
+      const response = await fetch("/api/admin/blogs", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: blog.id,
+          status: newStatus,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Durum değiştirilemedi.");
+      }
+
+      setBlogs((current) =>
+        current.map((item) =>
+          item.id === blog.id
+            ? {
+                ...item,
+                status: newStatus,
+                published_at:
+                  newStatus === "published"
+                    ? new Date().toISOString()
+                    : null,
+              }
+            : item
+        )
+      );
+
+      setMessage(
+        newStatus === "published"
+          ? "Blog yayınlandı."
+          : "Blog taslağa alındı."
+      );
+    } catch (error: any) {
+      setMessage(error?.message || "Durum değiştirilemedi.");
+    }
+  }
+
+  const filteredBlogs = useMemo(() => {
+    const value = search.toLowerCase().trim();
+
+    if (!value) return blogs;
+
+    return blogs.filter((blog) => {
+      return (
+        blog.title?.toLowerCase().includes(value) ||
+        blog.slug?.toLowerCase().includes(value) ||
+        String(blog.id).includes(value)
+      );
+    });
+  }, [blogs, search]);
+
+  const publishedCount = blogs.filter(
+    (blog) => blog.status === "published"
+  ).length;
+
+  const draftCount = blogs.filter(
+    (blog) => blog.status !== "published"
+  ).length;
 
   return (
-    <main className="min-h-screen bg-black text-white p-6">
-      {/* BAŞLIK */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-5xl font-bold text-yellow-500">
-          Admin Paneli
-        </h1>
+    <main className="min-h-screen bg-zinc-950 text-white p-6 md:p-10">
+      <div className="max-w-7xl mx-auto">
 
-        <div className="flex flex-wrap gap-3">
-          {/* 🔔 BİLDİRİM BUTONU */}
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-8">
+          <div>
+            <p className="text-sm text-zinc-500 mb-2">
+              BARBER PRO
+            </p>
+
+            <h1 className="text-3xl md:text-4xl font-bold">
+              Blog Yönetim Paneli
+            </h1>
+
+            <p className="text-zinc-400 mt-2">
+              Otomatik oluşturulan içerikleri buradan yönet.
+            </p>
+          </div>
+
           <button
-            onClick={enableNotifications}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black px-5 py-3 rounded-lg font-bold"
+            onClick={loadBlogs}
+            className="px-5 py-3 rounded-xl bg-white text-black font-semibold hover:bg-zinc-200 transition"
           >
-            🔔 Bildirimleri Aç
-          </button>
-
-          {/* ÇIKIŞ */}
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push("/login");
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg"
-          >
-            Çıkış Yap
+            Yenile
           </button>
         </div>
-      </div>
 
-      {/* ARAMA */}
-      <div className="mt-8">
-        <input
-          type="text"
-          placeholder="🔍 İsim veya telefon ara..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full mb-6 p-4 rounded-xl bg-zinc-900 border border-yellow-500/20 text-white outline-none"
-        />
+        {/* MESSAGE */}
+        {message && (
+          <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-4 text-sm text-zinc-200">
+            {message}
+          </div>
+        )}
 
-        {/* TARİH */}
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) =>
-            setSelectedDate(e.target.value)
-          }
-          className="w-full mb-6 p-4 rounded-xl bg-zinc-900 border border-yellow-500/20 text-white outline-none"
-        />
-      </div>
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
-      {/* İSTATİSTİKLER */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
-        <div className="bg-zinc-900 border border-yellow-500/20 rounded-xl p-6">
-          <p className="text-gray-400">Toplam</p>
-          <h2 className="text-4xl font-bold text-yellow-500">
-            {totalBookings}
-          </h2>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <p className="text-zinc-500 text-sm">
+              Toplam Blog
+            </p>
+
+            <p className="text-3xl font-bold mt-2">
+              {blogs.length}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <p className="text-zinc-500 text-sm">
+              Yayında
+            </p>
+
+            <p className="text-3xl font-bold mt-2 text-green-400">
+              {publishedCount}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <p className="text-zinc-500 text-sm">
+              Taslak
+            </p>
+
+            <p className="text-3xl font-bold mt-2 text-yellow-400">
+              {draftCount}
+            </p>
+          </div>
+
         </div>
 
-        <div className="bg-zinc-900 border border-blue-500/20 rounded-xl p-6">
-          <p className="text-gray-400">Bekliyor</p>
-          <h2 className="text-4xl font-bold text-blue-500">
-            {pendingBookings}
-          </h2>
+        {/* SEARCH */}
+        <div className="mb-6">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Blog ara..."
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-4 outline-none focus:border-zinc-500"
+          />
         </div>
 
-        <div className="bg-zinc-900 border border-green-500/20 rounded-xl p-6">
-          <p className="text-gray-400">Tamamlandı</p>
-          <h2 className="text-4xl font-bold text-green-500">
-            {completedBookings}
-          </h2>
-        </div>
+        {/* BLOGS */}
+        <div className="rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900">
 
-        <div className="bg-zinc-900 border border-red-500/20 rounded-xl p-6">
-          <p className="text-gray-400">İptal</p>
-          <h2 className="text-4xl font-bold text-red-500">
-            {cancelledBookings}
-          </h2>
-        </div>
-      </div>
+          <div className="px-6 py-5 border-b border-zinc-800">
+            <h2 className="font-semibold text-lg">
+              Bloglar
+            </h2>
+          </div>
 
-      {/* RANDEVULAR */}
-      <div className="mt-8 space-y-4">
-        {bookings
-          .filter((booking) => {
-            const searchText =
-              search.toLowerCase();
-
-            const matchesSearch =
-              booking.full_name
-                ?.toLowerCase()
-                .includes(searchText) ||
-              booking.phone
-                ?.toLowerCase()
-                .includes(searchText);
-
-            const matchesDate =
-              selectedDate === "" ||
-              booking.appointment_date ===
-                selectedDate;
-
-            return (
-              matchesSearch && matchesDate
-            );
-          })
-          .map((booking) => (
-            <div
-              key={booking.id}
-              className="bg-zinc-900 border border-yellow-500/20 rounded-xl p-6"
-            >
-              <h3 className="text-2xl font-bold text-yellow-500">
-                {booking.full_name}
-              </h3>
-
-              <p className="text-gray-300 mt-2">
-                📞 {booking.phone}
-              </p>
-
-              <p className="text-gray-300">
-                ✂️ {booking.service}
-              </p>
-
-              <p className="text-gray-300">
-                📅 {booking.appointment_date}
-              </p>
-
-              <p className="text-gray-300">
-                🕒 {booking.appointment_time}
-              </p>
-
-              <p className="text-gray-300">
-                📌 Durum:{" "}
-                <span className="text-yellow-400">
-                  {booking.status}
-                </span>
-              </p>
-
-              {/* WHATSAPP */}
-              <a
-                href={`https://wa.me/90${booking.phone.replace(
-                  /\D/g,
-                  ""
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-4 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white"
-              >
-                💬 WhatsApp
-              </a>
-
-              {/* DURUM BUTONLARI */}
-              <div className="flex flex-wrap gap-3 mt-4">
-                {/* SADECE TAMAMLA */}
-                <button
-                  onClick={async () => {
-                    const { error } =
-                      await supabase
-                        .from("bookings")
-                        .update({
-                          status: "Tamamlandı",
-                        })
-                        .eq(
-                          "id",
-                          booking.id
-                        );
-
-                    if (!error) {
-                      getBookings();
-                    } else {
-                      console.error(
-                        error
-                      );
-                    }
-                  }}
-                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white"
-                >
-                  ✅ Tamamlandı
-                </button>
-
-                {/* SADECE İPTAL */}
-                <button
-                  onClick={async () => {
-                    const { error } =
-                      await supabase
-                        .from("bookings")
-                        .update({
-                          status: "İptal",
-                        })
-                        .eq(
-                          "id",
-                          booking.id
-                        );
-
-                    if (!error) {
-                      getBookings();
-                    } else {
-                      console.error(
-                        error
-                      );
-                    }
-                  }}
-                  className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg text-white"
-                >
-                  ❌ İptal
-                </button>
-              </div>
-
-              {/* SİL */}
-              <button
-                onClick={async () => {
-                  const { error } =
-                    await supabase
-                      .from("bookings")
-                      .delete()
-                      .eq(
-                        "id",
-                        booking.id
-                      );
-
-                  if (!error) {
-                    setBookings(
-                      bookings.filter(
-                        (b) =>
-                          b.id !==
-                          booking.id
-                      )
-                    );
-                  } else {
-                    console.error(
-                      error
-                    );
-                  }
-                }}
-                className="mt-4 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white"
-              >
-                🗑️ Randevuyu Sil
-              </button>
+          {loading ? (
+            <div className="p-10 text-center text-zinc-500">
+              Bloglar yükleniyor...
             </div>
-          ))}
+          ) : filteredBlogs.length === 0 ? (
+            <div className="p-10 text-center text-zinc-500">
+              Blog bulunamadı.
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-800">
+
+              {filteredBlogs.map((blog) => (
+                <div
+                  key={blog.id}
+                  className="p-6 hover:bg-zinc-800/40 transition"
+                >
+
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+
+                    <div className="min-w-0 flex-1">
+
+                      <div className="flex items-center gap-3 mb-2">
+
+                        <span className="text-xs text-zinc-500">
+                          #{blog.id}
+                        </span>
+
+                        <span
+                          className={`text-xs px-2.5 py-1 rounded-full ${
+                            blog.status === "published"
+                              ? "bg-green-500/10 text-green-400"
+                              : "bg-yellow-500/10 text-yellow-400"
+                          }`}
+                        >
+                          {blog.status === "published"
+                            ? "YAYINDA"
+                            : "TASLAK"}
+                        </span>
+
+                      </div>
+
+                      <h3 className="font-semibold text-lg mb-2">
+                        {blog.title}
+                      </h3>
+
+                      <p className="text-sm text-zinc-500 break-all">
+                        /blog/{blog.slug}
+                      </p>
+
+                      {blog.created_at && (
+                        <p className="text-xs text-zinc-600 mt-2">
+                          Oluşturulma:{" "}
+                          {new Date(
+                            blog.created_at
+                          ).toLocaleString("tr-TR")}
+                        </p>
+                      )}
+
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+
+                      <a
+                        href={`/blog/${blog.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm"
+                      >
+                        Görüntüle
+                      </a>
+
+                      <button
+                        onClick={() => toggleStatus(blog)}
+                        className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm"
+                      >
+                        {blog.status === "published"
+                          ? "Taslağa Al"
+                          : "Yayınla"}
+                      </button>
+
+                      <button
+                        onClick={() => deleteBlog(blog.id)}
+                        className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm"
+                      >
+                        Sil
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+          )}
+
+        </div>
+
+        {/* AUTO BLOG INFO */}
+        <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+
+            <h2 className="font-semibold">
+              Otomatik Blog Sistemi
+            </h2>
+          </div>
+
+          <p className="text-sm text-zinc-400">
+            Sistem günlük otomatik olarak yeni bir blog
+            oluşturacak şekilde çalışıyor.
+          </p>
+
+        </div>
+
       </div>
     </main>
   );

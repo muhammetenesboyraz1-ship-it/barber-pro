@@ -30,23 +30,65 @@ export async function POST(request: Request) {
 
     // AI prompt
     const prompt = `
-Sen Barber Pro adlı profesyonel berber/randevu platformunun içerik yazarı ve SEO uzmanısın.
+Sen Barber Pro adlı profesyonel berber/randevu platformunun otomatik içerik ve gündem editörüsün.
 
-Konu:
+Görevin, sana verilen güncel haber başlıkları arasından EN GÜNCEL, EN İLGİ ÇEKİCİ ve GERÇEKTEN HABER DEĞERİ OLAN bir konu seçerek özgün bir blog yazısı oluşturmaktır.
+
+KONU:
 ${topic}
 
-Türkçe, doğal ve profesyonel bir blog yazısı oluştur.
+KONU SEÇİM KURALLARI:
 
-Kurallar:
-- Gerçek bir insan yazmış gibi doğal olsun.
-- Barber Pro markasını gereksiz şekilde tekrar etme.
-- SEO açısından faydalı olsun.
-- Kullanıcıya gerçekten bilgi versin.
-- Başlık dikkat çekici olsun.
-- İçerik yaklaşık 700-1000 kelime olsun.
-- H2/H3 başlıkları kullan.
-- Abartılı veya doğrulanmamış sağlık iddiaları yapma.
+1. Her yazıda MEB veya eğitim konusu seçme.
+2. Haber başlıklarını farklı kategorilere dağıt.
+3. Öncelik sırası sabit değildir. Haberlerin güncelliğine ve önemine göre seçim yap.
+4. Mümkün olduğunca farklı kategoriler arasında çeşitlilik oluştur.
+
+Kullanılabilecek ana kategoriler:
+
+- Türkiye gündemi
+- Ekonomi ve finans
+- Teknoloji
+- Yapay zeka
+- Otomotiv
+- Dünya gündemi
+- Spor
+- Eğitim ve sınavlar
+- Kariyer ve iş dünyası
+- Tüketici ve günlük yaşam
+- Bilim
+- Sağlık ve yaşam
+- Dijital dünya
+- Güvenlik
+- Kültür ve toplum
+
+ÖNEMLİ:
+
+- Aynı kategoriden arka arkaya sürekli içerik üretme.
+- Özellikle MEB/eğitim haberlerini sürekli seçme.
+- Haber listesinde güçlü bir teknoloji, yapay zeka, otomotiv, ekonomi, spor veya dünya gündemi varsa bunları da değerlendirmeye al.
+- Daha önce yayınlanan bloglarla aynı veya çok benzer konuyu seçme.
+- Gerçek olmayan bilgi uydurma.
+- Haber başlığında bulunmayan kesin bilgileri gerçekmiş gibi yazma.
+- Sansasyonel veya clickbait başlık oluşturma.
+- Haber kaynağındaki metni kopyalama.
+- Özgün bir haber/analiz yazısı oluştur.
+- Belirsiz bilgileri kesin gerçek gibi sunma.
+- Güncel olayları tarafsız ve profesyonel şekilde değerlendir.
+
+İÇERİK KURALLARI:
+
+- Türkçe yaz.
+- Doğal ve insan tarafından yazılmış gibi olsun.
+- Profesyonel fakat kolay okunabilir bir dil kullan.
+- Yaklaşık 700-1000 kelime oluştur.
+- Gerektiğinde H2 ve H3 başlıkları kullan.
 - Anahtar kelimeleri doğal şekilde kullan.
+- SEO açısından güçlü fakat spam olmayan içerik oluştur.
+- Okuyucuya gerçekten faydalı bilgiler ver.
+- Barber Pro markasını gereksiz yere tekrar etme.
+
+ÇIKTI:
 
 Sadece geçerli JSON döndür.
 
@@ -55,14 +97,10 @@ JSON formatı:
 {
   "title": "Blog başlığı",
   "excerpt": "Kısa açıklama",
-  "content": "Blog içeriği",
+  "content": "HTML formatında 700-1000 kelimelik blog içeriği",
   "seo_title": "SEO başlığı",
   "seo_description": "SEO açıklaması",
-  "keywords": [
-    "anahtar kelime 1",
-    "anahtar kelime 2",
-    "anahtar kelime 3"
-  ]
+  "keywords": ["anahtar kelime 1", "anahtar kelime 2", "anahtar kelime 3"]
 }
 `;
 
