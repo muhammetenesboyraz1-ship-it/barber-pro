@@ -1,116 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
-const posts = {
-  "yapay-zeka": {
-    category: "Yapay Zeka",
-    title: "Yapay zeka hayatımızı nasıl değiştiriyor?",
-    description:
-      "Yapay zekanın günlük hayatımızı, çalışma şeklimizi ve gelecekteki teknoloji kullanımımızı nasıl değiştirdiğine göz atıyoruz.",
-    date: "13 Ağustos 2026",
-    readTime: "5 dk",
-    content: [
-      {
-        heading: "Yapay zeka artık hayatımızın içinde",
-        text: "Yapay zeka son yıllarda yalnızca teknoloji şirketlerinin kullandığı bir teknoloji olmaktan çıktı. Günlük kullandığımız uygulamalardan arama motorlarına, müşteri hizmetlerinden içerik üretimine kadar birçok alanda karşımıza çıkıyor.",
-      },
-      {
-        heading: "Çalışma şeklimiz değişiyor",
-        text: "Yapay zeka insanların yaptığı birçok tekrarlayan işi daha kısa sürede gerçekleştirmesine yardımcı oluyor. Metin oluşturma, veri analizi, görsel üretimi ve yazılım geliştirme gibi alanlarda önemli bir yardımcı haline geliyor.",
-      },
-      {
-        heading: "Gelecekte bizi ne bekliyor?",
-        text: "Önümüzdeki yıllarda yapay zekanın daha fazla günlük uygulamaya entegre olması bekleniyor. Buradaki en önemli nokta yapay zekayı insanın yerine geçen bir araçtan ziyade insanın yeteneklerini artıran bir yardımcı olarak değerlendirmek.",
-      },
-    ],
-  },
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-  "siber-guvenlik": {
-    category: "Siber Güvenlik",
-    title: "İnternette daha güvenli olmak için 10 yöntem",
-    description:
-      "Hesaplarını ve kişisel bilgilerini internette daha güvenli tutmak için uygulayabileceğin temel güvenlik yöntemleri.",
-    date: "13 Ağustos 2026",
-    readTime: "6 dk",
-    content: [
-      {
-        heading: "1. Güçlü ve benzersiz şifreler kullan",
-        text: "Her hesapta aynı şifreyi kullanmak yerine farklı ve tahmin edilmesi zor şifreler tercih et. Özellikle e-posta ve banka hesapların için benzersiz şifreler kullan.",
-      },
-      {
-        heading: "2. İki aşamalı doğrulamayı aç",
-        text: "İki aşamalı doğrulama hesabına ekstra bir güvenlik katmanı ekler. Şifren ele geçirilse bile hesabına erişilmesini zorlaştırır.",
-      },
-      {
-        heading: "3. Şüpheli bağlantılara dikkat et",
-        text: "Tanımadığın kişilerden gelen bağlantıları açmadan önce dikkatlice kontrol et. Özellikle acil işlem yapmanı isteyen mesajlara karşı temkinli ol.",
-      },
-      {
-        heading: "4. Güncellemeleri ihmal etme",
-        text: "Telefon, bilgisayar ve kullandığın uygulamaların güncel olması güvenlik açıklarının kapatılması açısından önemlidir.",
-      },
-      {
-        heading: "5. Herkese açık Wi-Fi ağlarında dikkatli ol",
-        text: "Herkese açık ağlarda hassas işlemler gerçekleştirirken dikkatli davran. Mümkün olduğunda güvenilir bağlantılar kullan.",
-      },
-      {
-        heading: "6. Kişisel bilgilerini gereksiz paylaşma",
-        text: "İnternette paylaştığın bilgiler zamanla farklı amaçlarla kullanılabilir. Adres, telefon ve benzeri bilgileri herkese açık şekilde paylaşmamaya dikkat et.",
-      },
-      {
-        heading: "7. Uygulamaların izinlerini kontrol et",
-        text: "Telefonundaki uygulamaların kamera, mikrofon, konum ve dosya erişimi gibi izinlerini düzenli olarak kontrol et.",
-      },
-      {
-        heading: "8. Yedekleme yap",
-        text: "Önemli dosyalarının yedeğini almak cihaz arızası, yanlışlıkla silme veya benzeri durumlarda verilerini korumana yardımcı olur.",
-      },
-      {
-        heading: "9. Hesap hareketlerini kontrol et",
-        text: "Önemli hesaplarında tanımadığın giriş veya hareket olup olmadığını düzenli olarak kontrol et.",
-      },
-      {
-        heading: "10. Bilmediğin dosyaları indirme",
-        text: "Kaynağından emin olmadığın dosyaları indirmek cihazını güvenlik risklerine maruz bırakabilir.",
-      },
-    ],
-  },
-
-  dijitallesme: {
-    category: "Dijitalleşme",
-    title: "Küçük işletmeler neden dijitalleşmeli?",
-    description:
-      "Küçük işletmelerin dijital araçlardan nasıl faydalanabileceğini ve işlerini nasıl daha verimli hale getirebileceğini anlatıyoruz.",
-    date: "13 Ağustos 2026",
-    readTime: "4 dk",
-    content: [
-      {
-        heading: "Dijitalleşme sadece büyük şirketler için değil",
-        text: "Dijital araçlar artık küçük işletmeler için de ulaşılabilir durumda. Doğru araçların kullanılması işletmelerin zaman kazanmasına ve müşterilerine daha iyi hizmet vermesine yardımcı olabilir.",
-      },
-      {
-        heading: "Randevu ve müşteri yönetimi",
-        text: "Özellikle hizmet sektöründeki işletmeler için online randevu sistemleri önemli kolaylık sağlar. Müşteriler istedikleri zaman randevu oluşturabilir, işletme sahipleri ise randevularını daha düzenli takip edebilir.",
-      },
-      {
-        heading: "Müşteri deneyimi önem kazanıyor",
-        text: "Dijitalleşme yalnızca işletmenin iç işleyişini değil, müşterinin işletmeyle olan deneyimini de geliştirir. Daha hızlı iletişim ve kolay randevu süreçleri müşteri memnuniyetini artırabilir.",
-      },
-      {
-        heading: "Doğru araçları seçmek",
-        text: "Bir işletmenin onlarca farklı sisteme ihtiyacı olmak zorunda değil. Önemli olan işletmenin gerçek problemlerini belirlemek ve bu problemlere çözüm sağlayan araçları kullanmaktır.",
-      },
-    ],
-  },
-} as const;
-
-type Slug = keyof typeof posts;
-
-export function generateStaticParams() {
-  return Object.keys(posts).map((slug) => ({
-    slug,
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function BlogPostPage({
   params,
@@ -119,11 +19,27 @@ export default async function BlogPostPage({
 }) {
   const { slug } = await params;
 
-  if (!(slug in posts)) {
+  const { data: post, error } = await supabase
+    .from("blog_posts")
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      seo_description,
+      content,
+      created_at,
+      published_at,
+      status
+    `)
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (error || !post) {
+    console.error("Blog yazısı alınamadı:", error);
     notFound();
   }
-
-  const post = posts[slug as Slug];
 
   return (
     <main className="min-h-screen bg-[#050505] text-white">
@@ -152,48 +68,96 @@ export default async function BlogPostPage({
       {/* ARTICLE */}
       <article className="mx-auto max-w-4xl px-6 py-20 md:py-28">
 
+        {/* META */}
         <div className="mb-8 flex flex-wrap items-center gap-3">
 
           <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-400">
-            {post.category}
+            Gündem
           </span>
 
           <span className="text-sm text-gray-500">
-            {post.date} • {post.readTime}
+            {new Date(post.published_at || post.created_at).toLocaleDateString(
+              "tr-TR"
+            )}
           </span>
 
         </div>
 
+        {/* TITLE */}
         <h1 className="text-4xl font-black leading-tight tracking-tight md:text-6xl">
           {post.title}
         </h1>
 
+        {/* DESCRIPTION */}
         <p className="mt-7 text-lg leading-8 text-gray-400 md:text-xl">
-          {post.description}
+          {post.excerpt || post.seo_description}
         </p>
 
+        {/* CONTENT */}
         <div className="mt-12 border-t border-white/10 pt-12">
 
-          {post.content.map((section) => (
-            <section
-              key={section.heading}
-              className="mb-12"
-            >
+          <div className="mt-12 border-t border-white/10 pt-12">
 
-              <h2 className="text-2xl font-black md:text-3xl">
-                {section.heading}
-              </h2>
+  <div
+    className="
+      max-w-none
+      text-gray-300
 
-              <p className="mt-5 text-base leading-8 text-gray-400 md:text-lg">
-                {section.text}
-              </p>
+      [&_h1]:mb-6
+      [&_h1]:mt-10
+      [&_h1]:text-4xl
+      [&_h1]:font-black
+      [&_h1]:text-white
 
-            </section>
-          ))}
+      [&_h2]:mb-5
+      [&_h2]:mt-10
+      [&_h2]:text-2xl
+      [&_h2]:font-black
+      [&_h2]:text-white
+
+      [&_h3]:mb-4
+      [&_h3]:mt-8
+      [&_h3]:text-xl
+      [&_h3]:font-bold
+      [&_h3]:text-white
+
+      [&_p]:mb-6
+      [&_p]:text-lg
+      [&_p]:leading-8
+      [&_p]:text-gray-300
+
+      [&_ul]:mb-6
+      [&_ul]:list-disc
+      [&_ul]:pl-6
+
+      [&_ol]:mb-6
+      [&_ol]:list-decimal
+      [&_ol]:pl-6
+
+      [&_li]:mb-2
+      [&_li]:text-lg
+      [&_li]:leading-8
+
+      [&_strong]:font-bold
+      [&_strong]:text-white
+
+      [&_a]:text-yellow-400
+      [&_a]:underline
+    "
+  >
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
+    >
+      {post.content || ""}
+    </ReactMarkdown>
+  </div>
+
+</div>
 
         </div>
 
-        {/* BACK BUTTON */}
+        {/* BACK */}
         <div className="mt-16 border-t border-white/10 pt-8">
 
           <Link

@@ -1,36 +1,19 @@
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-const posts = [
-  {
-    slug: "yapay-zeka",
-    category: "Yapay Zeka",
-    title: "Yapay zeka hayatımızı nasıl değiştiriyor?",
-    description:
-      "Yapay zekanın günlük hayatımızı, çalışma şeklimizi ve gelecekteki teknoloji kullanımımızı nasıl değiştirdiğine göz atıyoruz.",
-    date: "13 Ağustos 2026",
-    readTime: "5 dk",
-  },
-  {
-    slug: "siber-guvenlik",
-    category: "Siber Güvenlik",
-    title: "İnternette daha güvenli olmak için 10 yöntem",
-    description:
-      "Hesaplarını ve kişisel bilgilerini internette daha güvenli tutmak için uygulayabileceğin temel güvenlik yöntemleri.",
-    date: "13 Ağustos 2026",
-    readTime: "6 dk",
-  },
-  {
-    slug: "dijitallesme",
-    category: "Dijitalleşme",
-    title: "Küçük işletmeler neden dijitalleşmeli?",
-    description:
-      "Küçük işletmelerin dijital araçlardan nasıl faydalanabileceğini ve işlerini nasıl daha verimli hale getirebileceğini anlatıyoruz.",
-    date: "13 Ağustos 2026",
-    readTime: "4 dk",
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const { data: posts, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("status", "published")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Bloglar alınamadı:", error);
+  }
+
   return (
     <main className="min-h-screen bg-[#050505] text-white">
 
@@ -105,7 +88,7 @@ export default function BlogPage() {
             </h1>
 
             <span className="text-sm text-gray-500">
-              {posts.length} yazı
+              {posts?.length ?? 0} yazı
             </span>
 
           </div>
@@ -118,21 +101,21 @@ export default function BlogPage() {
 
         <div className="mx-auto grid max-w-7xl gap-6 px-6 md:grid-cols-3">
 
-          {posts.map((post) => (
+          {posts?.map((post) => (
 
             <article
-              key={post.slug}
-              className="rounded-3xl border border-white/10 bg-black p-7 transition hover:-translate-y-1 hover:border-yellow-500/30"
+              key={post.id}
+              className="flex flex-col rounded-3xl border border-white/10 bg-black p-7 transition hover:-translate-y-1 hover:border-yellow-500/30"
             >
 
               <div className="flex items-center justify-between gap-3">
 
                 <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs font-bold text-yellow-400">
-                  {post.category}
+                  {post.category || "Gündem"}
                 </span>
 
                 <span className="text-xs text-gray-600">
-                  {post.readTime}
+                  Haber
                 </span>
 
               </div>
@@ -141,22 +124,28 @@ export default function BlogPage() {
                 {post.title}
               </h2>
 
-              <p className="mt-4 text-sm leading-7 text-gray-500">
-                {post.description}
+              <p className="mt-4 line-clamp-4 text-sm leading-7 text-gray-500">
+                {post.excerpt || post.seo_description || ""}
               </p>
 
-              <div className="mt-7 border-t border-white/10 pt-5">
+              <div className="mt-auto pt-7">
 
-                <p className="text-xs text-gray-600">
-                  {post.date}
-                </p>
+                <div className="border-t border-white/10 pt-5">
 
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="mt-4 inline-block text-sm font-bold text-yellow-500 transition hover:text-yellow-400"
-                >
-                  Yazıyı Oku →
-                </Link>
+                  <p className="text-xs text-gray-600">
+                    {post.created_at
+                      ? new Date(post.created_at).toLocaleDateString("tr-TR")
+                      : ""}
+                  </p>
+
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="mt-4 inline-flex text-sm font-bold text-yellow-500 transition hover:text-yellow-400"
+                  >
+                    Yazıyı Oku →
+                  </Link>
+
+                </div>
 
               </div>
 
@@ -165,6 +154,14 @@ export default function BlogPage() {
           ))}
 
         </div>
+
+        {(!posts || posts.length === 0) && (
+          <div className="mx-auto max-w-7xl px-6 py-20 text-center">
+            <p className="text-gray-500">
+              Henüz yayınlanmış yazı bulunmuyor.
+            </p>
+          </div>
+        )}
 
       </section>
 
@@ -189,31 +186,19 @@ export default function BlogPage() {
 
             <div className="flex gap-8 text-sm text-gray-500">
 
-              <Link
-                href="/"
-                className="hover:text-white"
-              >
+              <Link href="/" className="hover:text-white">
                 Ürünler
               </Link>
 
-              <Link
-                href="/tools"
-                className="hover:text-white"
-              >
+              <Link href="/tools" className="hover:text-white">
                 Araçlar
               </Link>
 
-              <Link
-                href="/blog"
-                className="hover:text-white"
-              >
+              <Link href="/blog" className="hover:text-white">
                 Blog
               </Link>
 
-              <Link
-                href="/#iletisim"
-                className="hover:text-white"
-              >
+              <Link href="/#iletisim" className="hover:text-white">
                 İletişim
               </Link>
 
